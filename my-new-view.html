@@ -1,0 +1,361 @@
+<!--
+Members:
+Jason Deichmann
+Betlee Barraquias
+
+
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+
+<link rel="import" href="bower_components/iron-pages/iron-pages.html">
+
+
+<link rel="import" href="bower_components/webcomponentsjs/webcomponents-lite.js">
+
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="my-carousel.html">
+<link rel="import" href="bower_components/bwt-uploader/bwt-uploader.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-styles/color.html">
+<style is="custom-style"></style>
+
+
+<link rel="lazy-import" href="my-carousel.html">
+<link rel="lazy-import" href="my-new-view.html">
+
+<dom-module id="my-new-view">
+    <app-location
+        route="{{route}}"
+        url-space-regex="^[[rootPath]]">
+    </app-location>
+
+    <app-route
+        route="{{route}}"
+        pattern="[[rootPath]]:page"
+        data="{{routeData}}"
+        tail="{{subroute}}">
+    </app-route>
+  <!-- Defines the element's style and local DOM -->
+<template>
+      
+  <style>
+      #container {
+    display: flex;
+  }
+  paper-button {
+    font-family: 'Roboto', 'Noto', sans-serif;
+    font-weight: normal;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+      paper-button.green {
+    background-color: var(--paper-green-500);
+    color: white;
+          font-size:calc(3vw + 10px);
+          z-index: 1000;
+  }
+  paper-button.green[active] {
+    background-color: var(--paper-red-500);
+  }
+
+    @font-face {
+    font-family: 'roboto';
+    src: url('roboto/Roboto-Regular.ttf');
+}
+      
+      
+      /* The Overlay (background) */
+.overlay {
+    /* Height & width depends on how you want to reveal the overlay (see JS below) */ 
+    height: 100%;
+    width: 0;
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    background-color: rgb(211,211,211); /* Black w/opacity */
+    overflow-x: hidden; /* Disable horizontal scroll */
+    transition: 0.25s; /* 0.5 second transition effect to slide in or slide down the overlay (height or width, depending on reveal) */
+}
+
+/* Position the content inside the overlay */
+.overlay-content {
+    position: relative;
+    top: 15%; /* 25% from the top */
+    width: 100%; /* 100% width */
+    text-align: center; /* Centered text/links */
+    margin-top: 30px; /* 30px top margin to avoid conflict with the close button on smaller screens */
+}
+      
+      .overlay-content-content{
+          background: white;
+      }
+
+/* The navigation links inside the overlay */
+.overlay a {
+    padding: 8px;
+    text-decoration: none;
+    font-size: 36px;
+    color: #4c4c4c;
+    display: block; /* Display block instead of inline */
+    transition: 0.3s; /* Transition effects on hover (color) */
+}
+
+/* When you mouse over the navigation links, change their color */
+.overlay a:hover, .overlay a:focus {
+    color: #4c4c4c;
+}
+
+/* Position the close button (top right corner) */
+.overlay .closebtn {
+    position: absolute;
+    right: 2.5vw;
+    top:6vw;
+    font-size: calc(4vw + 10px);
+}
+      .closebtn{
+          z-index: 1005;
+      }
+      .fontlarge{
+          --paper-input-container-input:{
+              font-size:calc(3vw + 10px);
+          }
+      }
+      
+/* When the height of the screen is less than 450 pixels, change the font-size of the links and position the close button again, so they don't overlap */
+
+    my-carousel my-imgtext{
+      width: 100%;
+      contain: content;
+        z-index: 0;
+    }
+
+    my-carousel::after{
+      display: block;
+      content: '';
+      padding-top: 75%; /* 4:3 = height is 75% of width */
+        z-index: 0;
+    }
+
+    my-carousel img{
+      position: absolute;
+      width: 100%;
+      height: 100%;
+        z-index: 0;
+    }
+      
+      .navbar{
+          width:100%;
+          height:calc(9vw + 20px);
+          background-color: #4c4c4c;
+          display:block;
+          z-index: 1;
+      }
+      
+      .circle-button{
+          border-radius: 1vw 1vw 1vw 1vw;
+          top:3.5vw;
+          background-color:transparent;
+          display:block;
+          right: 3.3vw;
+          z-index:100;
+          outline: none;
+          position:absolute;
+          font-size: calc(3vw + 10px);
+          opacity: 100%;
+          text-align:center;
+          color:lightgray;
+          border-color: lightgray; 
+          transition: 0.25s;
+      }
+      .circle-button:hover{
+          color:white;
+          border-color:white;
+          transition: 0.25s;
+      }
+
+      @media screen and (min-width: 500px){
+          .previewImg{
+          --preview-width: 25vw;
+          --preview-height: 25vw;
+          
+      }
+      }
+      @media screen and (max-width: 500px){
+          .previewImg{
+          --preview-width: 90vw;
+          --preview-height: 90vw;
+          
+      }
+      }
+         
+  </style>
+
+<div class="navbar">
+    <button class="circle-button" on-click="_openNav" style="font-family:'Arial';"><font style="font-size:calc(2vw + 10px);">Add new image</font> &plus;</button>
+    </div>
+<body>
+    
+    <div >
+        
+  <my-carousel id="etit" selected="0">
+
+    <img src="/images/p1.jpg">
+    <img src="/images/p2.jpg">
+    <img src="/images/p3.jpg"> 
+      <img src="/images/p4.png"> 
+    
+    
+   
+  </my-carousel>
+     <iron-pages id="zucc" selected="0">
+         <div>satu Asteroid</div>
+         <div>dua Nice</div>
+         <div>tiga Son of Boruto's Father</div>
+         <div>tiga Space</div>
+      <template is="dom-repeat" items="{{imgs}}">
+        <div>{{item.desc}}</div>
+      </template>
+    </iron-pages>
+        
+    </div>
+    
+    
+    
+    
+    <!-- The overlay -->
+<div id="myNav" class="overlay">
+
+  <!-- Button to close the overlay navigation -->
+  <a href="javascript:void(0)" class="closebtn" on-click="_closeNav">&times;</a>
+
+  <!-- Overlay content -->
+  <div class="overlay-content">
+      <div class="overlay-content-content">
+    <a><center>
+        <bwt-uploader class="previewImg" uploadText="From your local directory, drag file to this area" theme="square" placeholder={{uploaded}} id="imgUploader" target="https://httpbin.org/post" body="[[body]]" header="[[header]]" method="POST"></bwt-uploader> 
+       <!-- 
+        <div><br><br>
+            <label for="sel1">Upload Artifact Image</label><br>
+            <input type='file' name='artPhoto' id="artImage1" on-change="_showArtImage"/>
+            <img id="artImage" src="asd" alt="" max-width="300px" max-height="300px" min-width="0px" min-height="0px" />
+        </div> 
+        -->
+        <paper-input class="fontlarge" style="font-size:calc(3vw + 10px);" id="desc"  label="Description" char-counter maxlength="50" minlength="0"></paper-input>
+        <br><paper-button raised class="green" on-click="_imgs">Submit</paper-button>
+        </center>
+</a>
+          <br>
+          <br>
+          </div>
+  </div>
+</div>
+    
+    
+
+<!-- Use any element to open/show the overlay navigation menu -->
+   
+    
+</body>
+      <script>
+         
+         document.querySelector('my-new-view').addEventListener('sld', function (e) {
+             var pages = Polymer.dom(this.root).querySelector('#zucc');     
+             if(e.detail.type =="nxt"){
+                 pages.selectNext();
+             }
+             else{
+                 pages.selectPrevious();
+             }  
+         });
+         document.querySelector('my-new-view').addEventListener('resetz', function (e) {
+             var pages = Polymer.dom(this.root).querySelector('#imgUploader'); 
+             
+         });
+        
+            
+      </script>  
+  </template>
+  <script>
+    // Your new element extends the Polymer.Element base class
+    class MyNewView extends Polymer.Element {
+      static get is() { return 'my-new-view'; }
+        static get properties() {
+        return {
+          uploaded:{
+            type:String
+          },
+          imgs: {
+            type: Array,
+            value() {
+              return [
+                
+              ];
+            }
+          }
+         };
+      }
+        ready() {
+          super.ready();
+
+        }
+       
+        _pushed(){
+            
+            alert(this.$.imgUploader.image);
+        }
+        _imgs(){   
+            if(this.$.imgUploader.image == ""){
+                alert("Upload an image to submit")
+            }
+            else if(this.$.desc.value == null){
+                alert("Enter a description")
+            }
+            else if(this.$.desc.value.length < 5){
+                alert("Description should be longer than 5 characters")
+            }
+            else{
+                var carousel = this.$.etit;
+            var descs = this.$.desc.value;
+            this.uploaded = this.$.imgUploader.image; 
+            var dynamicEl1 = document.createElement("img");
+            
+            dynamicEl1.src = this.uploaded;
+                carousel.appendChild(dynamicEl1);
+            
+            this.push("imgs",{imgSrc:this.uploaded, desc: descs});
+            this.$.desc.value = "";
+            
+            this.$.imgUploader.reset();
+           
+            this.$.myNav.style.width = "0%";
+            }
+            }
+        
+        _openNav(){
+            this.$.myNav.style.width = "100%";
+        }
+        
+        _closeNav(){
+            this.$.myNav.style.width = "0%";
+        }
+        
+        
+    }
+    //Now, register your new custom element so the browser can use it
+    customElements.define(MyNewView.is, MyNewView);
+      
+
+      
+      
+  </script>
+</dom-module>
